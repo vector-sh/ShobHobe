@@ -34,6 +34,8 @@ export async function processFile(
       return processProductivity(action, files);
     case 'file-utility':
       return processFileUtility(action, files);
+    case 'viral':
+      return processViral(action, files);
     case 'qrcode':
       return processQRCode(action, files);
     case 'utility':
@@ -390,4 +392,9 @@ async function processProductivity(action: string, files: File[]): Promise<Proce
 async function processFileUtility(action: string, files: File[]): Promise<ProcessResult> {
   // File utilities like batch rename, file splitter, watermark adder
   throw new Error('File utility features coming soon! This will include batch rename, file splitting, and watermark addition.');
+}
+
+async function processViral(action: string, files: File[]): Promise<ProcessResult> {
+  // Viral/Niche tools like meme generator, collage maker, GIF maker, background remover
+  throw new Error('Viral/Niche tools coming soon! Features include meme generator, collage maker, GIF maker, background remover, and more creative tools.');
 }
