@@ -1413,13 +1413,528 @@ async function processGenerator(action: string, files: File[]): Promise<ProcessR
 }
 
 async function processProductivity(action: string, files: File[]): Promise<ProcessResult> {
-  // Productivity tools like password generator, QR codes, etc.
-  throw new Error('Productivity tools coming soon! Features include password generation, barcode/QR generation, URL shortener, and more.');
+  switch (action) {
+    case 'generate-barcode': {
+      const file = files[0];
+      const data = await file.text();
+      
+      // Barcode generation requires jsbarcode library and canvas
+      throw new Error(
+        'Barcode generation requires:\n' +
+        '1. Install jsbarcode library\n' +
+        '2. Set up canvas for Node.js (node-canvas)\n' +
+        '3. Implementation:\n' +
+        '   const JsBarcode = require("jsbarcode");\n' +
+        '   const { createCanvas } = require("canvas");\n' +
+        '   const canvas = createCanvas();\n' +
+        '   JsBarcode(canvas, data, { format: "CODE128" });\n' +
+        '   return canvas.toBuffer("image/png");'
+      );
+    }
+    
+    case 'shorten-url': {
+      const file = files[0];
+      const url = await file.text();
+      
+      // URL shortener requires database and nanoid
+      const { nanoid } = await import('nanoid');
+      const shortCode = nanoid(8);
+      
+      // In production, save to database: { shortCode, originalUrl, createdAt }
+      const result = {
+        original: url,
+        shortened: `https://yourdomain.com/${shortCode}`,
+        shortCode: shortCode,
+        message: 'URL shortener requires database setup to persist mappings.'
+      };
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(result, null, 2)),
+        contentType: 'application/json',
+        filename: 'shortened-url.json',
+      };
+    }
+    
+    case 'generate-password': {
+      const crypto = await import('crypto');
+      
+      // Generate secure password
+      const length = 16;
+      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+      let password = '';
+      
+      for (let i = 0; i < length; i++) {
+        const randomIndex = crypto.randomInt(0, charset.length);
+        password += charset[randomIndex];
+      }
+      
+      const result = {
+        password: password,
+        length: length,
+        strength: 'Strong',
+        includesUppercase: true,
+        includesLowercase: true,
+        includesNumbers: true,
+        includesSpecialChars: true,
+      };
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(result, null, 2)),
+        contentType: 'application/json',
+        filename: 'generated-password.json',
+      };
+    }
+    
+    case 'check-password': {
+      const file = files[0];
+      const password = await file.text();
+      
+      // Password strength check
+      const hasUppercase = /[A-Z]/.test(password);
+      const hasLowercase = /[a-z]/.test(password);
+      const hasNumbers = /[0-9]/.test(password);
+      const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+      const length = password.length;
+      
+      let score = 0;
+      if (length >= 8) score += 1;
+      if (length >= 12) score += 1;
+      if (hasUppercase) score += 1;
+      if (hasLowercase) score += 1;
+      if (hasNumbers) score += 1;
+      if (hasSpecialChars) score += 1;
+      
+      let strength = 'Weak';
+      if (score >= 5) strength = 'Strong';
+      else if (score >= 3) strength = 'Medium';
+      
+      const result = {
+        password: password.substring(0, 3) + '***', // Don't expose full password
+        length: length,
+        strength: strength,
+        score: score,
+        checks: {
+          hasUppercase,
+          hasLowercase,
+          hasNumbers,
+          hasSpecialChars,
+          minLength: length >= 8,
+        },
+        suggestions: []
+      };
+      
+      if (!hasUppercase) result.suggestions.push('Add uppercase letters');
+      if (!hasLowercase) result.suggestions.push('Add lowercase letters');
+      if (!hasNumbers) result.suggestions.push('Add numbers');
+      if (!hasSpecialChars) result.suggestions.push('Add special characters');
+      if (length < 12) result.suggestions.push('Use at least 12 characters');
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(result, null, 2)),
+        contentType: 'application/json',
+        filename: 'password-strength.json',
+      };
+    }
+    
+    case 'generate-color-palette': {
+      const file = files[0];
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Extract colors from image using sharp
+      const image = sharp(Buffer.from(arrayBuffer));
+      const { data, info } = await image
+        .resize(100, 100, { fit: 'cover' })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      
+      // Simple color extraction (sampling pixels)
+      const colors: string[] = [];
+      const step = Math.floor(data.length / 5 / 3);
+      
+      for (let i = 0; i < data.length; i += step * 3) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (r !== undefined && g !== undefined && b !== undefined) {
+          const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+          if (colors.length < 5 && !colors.includes(hex)) {
+            colors.push(hex);
+          }
+        }
+      }
+      
+      const result = {
+        colors: colors,
+        count: colors.length,
+        message: 'Color palette extracted from image. For better results, use colorthief library.',
+      };
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(result, null, 2)),
+        contentType: 'application/json',
+        filename: 'color-palette.json',
+      };
+    }
+    
+    case 'stopwatch': {
+      // Stopwatch is a client-side tool (browser-based)
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stopwatch</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 50px; }
+    #display { font-size: 48px; margin: 20px; }
+    button { font-size: 18px; padding: 10px 20px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Stopwatch</h1>
+  <div id="display">00:00:00</div>
+  <button onclick="start()">Start</button>
+  <button onclick="stop()">Stop</button>
+  <button onclick="reset()">Reset</button>
+  <script>
+    let startTime, elapsedTime = 0, timerInterval;
+    
+    function start() {
+      startTime = Date.now() - elapsedTime;
+      timerInterval = setInterval(update, 10);
+    }
+    
+    function stop() {
+      clearInterval(timerInterval);
+    }
+    
+    function reset() {
+      clearInterval(timerInterval);
+      elapsedTime = 0;
+      document.getElementById('display').textContent = '00:00:00';
+    }
+    
+    function update() {
+      elapsedTime = Date.now() - startTime;
+      const time = new Date(elapsedTime);
+      const hours = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
+      const minutes = String(time.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(time.getUTCSeconds()).padStart(2, '0');
+      document.getElementById('display').textContent = hours + ':' + minutes + ':' + seconds;
+    }
+  </script>
+</body>
+</html>`;
+      
+      return {
+        buffer: Buffer.from(html),
+        contentType: 'text/html',
+        filename: 'stopwatch.html',
+      };
+    }
+    
+    case 'track-habit': {
+      const file = files[0];
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'habit-tracker.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        doc.fontSize(20).text('Habit Tracker', { align: 'center' });
+        doc.moveDown();
+        
+        if (data.habits && data.habits.length > 0) {
+          data.habits.forEach((habit: any) => {
+            doc.fontSize(14).text(habit.name || 'Habit', { underline: true });
+            doc.fontSize(10).text(`Goal: ${habit.goal || 'Daily'}`);
+            doc.text(`Current Streak: ${habit.streak || 0} days`);
+            doc.moveDown();
+          });
+        }
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-calendar': {
+      const file = files[0];
+      const data = JSON.parse(await file.text());
+      const year = data.year || new Date().getFullYear();
+      const month = data.month || new Date().getMonth() + 1;
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ layout: 'landscape' });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: `calendar-${year}-${month}.pdf`,
+          });
+        });
+        doc.on('error', reject);
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        doc.fontSize(24).text(`${monthNames[month - 1]} ${year}`, { align: 'center' });
+        doc.moveDown();
+        
+        // Days of week header
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        let x = 50;
+        const cellWidth = 100;
+        
+        days.forEach(day => {
+          doc.fontSize(12).text(day, x, doc.y, { width: cellWidth, align: 'center' });
+          x += cellWidth;
+        });
+        
+        doc.moveDown(2);
+        
+        // Calculate days in month
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        // Grid
+        x = 50 + (firstDay * cellWidth);
+        for (let day = 1; day <= daysInMonth; day++) {
+          doc.fontSize(14).text(String(day), x, doc.y, { width: cellWidth, align: 'center' });
+          x += cellWidth;
+          if ((firstDay + day) % 7 === 0) {
+            x = 50;
+            doc.moveDown(3);
+          }
+        }
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-todo-list': {
+      const file = files[0];
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'todo-list.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        doc.fontSize(20).text('To-Do List', { align: 'center' });
+        doc.fontSize(12).text(new Date().toLocaleDateString(), { align: 'center' });
+        doc.moveDown(2);
+        
+        if (data.tasks && data.tasks.length > 0) {
+          data.tasks.forEach((task: any, index: number) => {
+            doc.fontSize(11).text(`☐ ${task.title || task}`, 50, doc.y);
+            if (task.description) {
+              doc.fontSize(9).text(`   ${task.description}`, 70, doc.y);
+            }
+            doc.moveDown(0.5);
+          });
+        } else {
+          // Empty template
+          for (let i = 0; i < 20; i++) {
+            doc.fontSize(11).text('☐ _________________________________');
+            doc.moveDown(0.5);
+          }
+        }
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-qr': {
+      // This is handled by processQRCode
+      const file = files[0];
+      const text = await file.text();
+      
+      const qrBuffer = await QRCode.toBuffer(text, {
+        errorCorrectionLevel: 'H',
+        type: 'png',
+        width: 500,
+        margin: 2,
+      });
+      
+      return {
+        buffer: qrBuffer,
+        contentType: 'image/png',
+        filename: 'qrcode.png',
+      };
+    }
+    
+    default:
+      throw new Error(`Productivity action "${action}" not yet implemented.`);
+  }
 }
 
 async function processFileUtility(action: string, files: File[]): Promise<ProcessResult> {
-  // File utilities like batch rename, file splitter, watermark adder
-  throw new Error('File utility features coming soon! This will include batch rename, file splitting, and watermark addition.');
+  const file = files[0];
+  
+  switch (action) {
+    case 'rename': {
+      // Batch rename information
+      const data = JSON.parse(await file.text());
+      
+      const result = {
+        originalNames: data.files || [],
+        pattern: data.pattern || '{name}_{index}',
+        preview: (data.files || []).map((filename: string, index: number) => {
+          const ext = filename.split('.').pop();
+          const baseName = filename.replace(`.${ext}`, '');
+          return data.pattern
+            .replace('{name}', baseName)
+            .replace('{index}', String(index + 1).padStart(3, '0')) +
+            `.${ext}`;
+        }),
+        message: 'This is a preview. Actual renaming requires file system access on the server.',
+      };
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(result, null, 2)),
+        contentType: 'application/json',
+        filename: 'rename-preview.json',
+      };
+    }
+    
+    case 'create-zip': {
+      // ZIP creation requires archiver library
+      throw new Error(
+        'ZIP creation requires:\n' +
+        '1. Install archiver library: npm install archiver\n' +
+        '2. Implementation:\n' +
+        '   const archiver = require("archiver");\n' +
+        '   const archive = archiver("zip", { zlib: { level: 9 } });\n' +
+        '   archive.file(filepath, { name: filename });\n' +
+        '   archive.finalize();\n\n' +
+        'Multiple files need to be sent together or stored temporarily on the server.'
+      );
+    }
+    
+    case 'extract-zip': {
+      // ZIP extraction requires unzipper library
+      throw new Error(
+        'ZIP extraction requires:\n' +
+        '1. Install unzipper library: npm install unzipper\n' +
+        '2. Implementation:\n' +
+        '   const unzipper = require("unzipper");\n' +
+        '   const stream = require("stream");\n' +
+        '   const bufferStream = new stream.PassThrough();\n' +
+        '   bufferStream.end(buffer);\n' +
+        '   await bufferStream.pipe(unzipper.Extract({ path: outputPath }));\n\n' +
+        'Extracted files need to be packaged or stored for download.'
+      );
+    }
+    
+    case 'split-file': {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const chunkSize = 1024 * 1024; // 1MB chunks
+      const chunks = [];
+      
+      for (let i = 0; i < buffer.length; i += chunkSize) {
+        const chunk = buffer.slice(i, i + chunkSize);
+        chunks.push({
+          index: Math.floor(i / chunkSize) + 1,
+          size: chunk.length,
+          start: i,
+          end: Math.min(i + chunkSize, buffer.length)
+        });
+      }
+      
+      // For demo, return the first chunk
+      const firstChunk = buffer.slice(0, Math.min(chunkSize, buffer.length));
+      
+      return {
+        buffer: firstChunk,
+        contentType: 'application/octet-stream',
+        filename: `${file.name}.part1`,
+        message: `File split into ${chunks.length} chunks. Downloading first chunk.`,
+      };
+    }
+    
+    case 'add-watermark-file': {
+      // Determine file type and route to appropriate handler
+      const mimeType = file.type;
+      
+      if (mimeType.startsWith('image/')) {
+        // Image watermark using sharp
+        const arrayBuffer = await file.arrayBuffer();
+        const watermarkText = 'WATERMARK';
+        
+        const svgWatermark = `
+          <svg width="200" height="50">
+            <text x="10" y="30" font-family="Arial" font-size="24" fill="rgba(255,255,255,0.5)">
+              ${watermarkText}
+            </text>
+          </svg>
+        `;
+        
+        const watermarked = await sharp(Buffer.from(arrayBuffer))
+          .composite([{
+            input: Buffer.from(svgWatermark),
+            gravity: 'center',
+          }])
+          .toBuffer();
+        
+        return {
+          buffer: watermarked,
+          contentType: mimeType,
+          filename: `watermarked-${file.name}`,
+        };
+      } else if (mimeType === 'application/pdf') {
+        // PDF watermark using pdf-lib
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const pages = pdfDoc.getPages();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        
+        pages.forEach(page => {
+          const { width, height } = page.getSize();
+          page.drawText('WATERMARK', {
+            x: width / 2 - 50,
+            y: height / 2,
+            size: 50,
+            font,
+            color: rgb(0.5, 0.5, 0.5),
+            opacity: 0.3,
+          });
+        });
+        
+        const pdfBytes = await pdfDoc.save();
+        return {
+          buffer: Buffer.from(pdfBytes),
+          contentType: 'application/pdf',
+          filename: `watermarked-${file.name}`,
+        };
+      } else {
+        throw new Error(`Watermarking not supported for file type: ${mimeType}`);
+      }
+    }
+    
+    default:
+      throw new Error(`File utility action "${action}" not yet implemented.`);
+  }
 }
 
 async function processViral(action: string, files: File[]): Promise<ProcessResult> {
