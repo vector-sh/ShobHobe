@@ -7,6 +7,11 @@ export interface ToolConfig {
   inputTypes: string[];
   outputType: string;
   action: string;
+  phase?: number;
+  status?: 'active' | 'coming-soon' | 'beta';
+  maxFileSize?: number;
+  requiresDisclaimer?: boolean;
+  seoKeywords?: string[];
 }
 
 export const toolsConfig: ToolConfig[] = [
@@ -110,6 +115,48 @@ export const toolsConfig: ToolConfig[] = [
     inputTypes: [".pdf"],
     outputType: ".zip",
     action: "extract-images"
+  },
+  {
+    id: "pdf-to-word",
+    name: "PDF to Word",
+    description: "Convert PDF to DOCX format",
+    category: "pdf",
+    icon: "📝",
+    inputTypes: [".pdf"],
+    outputType: ".docx",
+    action: "to-word",
+    phase: 1,
+    status: "active",
+    maxFileSize: 50,
+    seoKeywords: ["pdf to word", "pdf to docx", "convert pdf"]
+  },
+  {
+    id: "word-to-pdf",
+    name: "Word to PDF",
+    description: "Convert DOCX to PDF format",
+    category: "document",
+    icon: "📄",
+    inputTypes: [".docx", ".doc"],
+    outputType: ".pdf",
+    action: "word-to-pdf",
+    phase: 1,
+    status: "active",
+    maxFileSize: 50,
+    seoKeywords: ["word to pdf", "docx to pdf", "convert docx"]
+  },
+  {
+    id: "pdf-to-ppt",
+    name: "PDF to PPT",
+    description: "Convert PDF to PowerPoint format",
+    category: "pdf",
+    icon: "📊",
+    inputTypes: [".pdf"],
+    outputType: ".pptx",
+    action: "to-ppt",
+    phase: 1,
+    status: "beta",
+    maxFileSize: 50,
+    seoKeywords: ["pdf to ppt", "pdf to powerpoint", "convert pdf"]
   },
 
   // Image Tools (15 tools)
@@ -364,6 +411,48 @@ export const toolsConfig: ToolConfig[] = [
     inputTypes: [".mp4", ".avi", ".mov", ".webm"],
     outputType: ".mp4",
     action: "subtitle"
+  },
+  {
+    id: "video-to-mp3",
+    name: "Video to MP3",
+    description: "Extract audio from video as MP3",
+    category: "video",
+    icon: "🎵",
+    inputTypes: [".mp4", ".avi", ".mov", ".webm", ".mkv"],
+    outputType: ".mp3",
+    action: "to-mp3",
+    phase: 1,
+    status: "active",
+    maxFileSize: 100,
+    seoKeywords: ["video to mp3", "extract audio", "convert video to audio"]
+  },
+  {
+    id: "video-to-mp4",
+    name: "Video to MP4",
+    description: "Convert video to MP4 format",
+    category: "video",
+    icon: "🎬",
+    inputTypes: [".avi", ".mov", ".webm", ".mkv", ".flv"],
+    outputType: ".mp4",
+    action: "to-mp4",
+    phase: 1,
+    status: "active",
+    maxFileSize: 200,
+    seoKeywords: ["video to mp4", "convert video", "mp4 converter"]
+  },
+  {
+    id: "audio-merge",
+    name: "Audio Merge",
+    description: "Combine multiple audio files into one",
+    category: "audio",
+    icon: "🔊",
+    inputTypes: [".mp3", ".wav", ".m4a", ".aac"],
+    outputType: ".mp3",
+    action: "merge",
+    phase: 1,
+    status: "active",
+    maxFileSize: 50,
+    seoKeywords: ["merge audio", "combine audio", "join audio files"]
   },
 
   // Document Tools (10 tools)
@@ -627,6 +716,7 @@ export const categories = [
   { id: "pdf", name: "PDF Tools", icon: "📄", description: "Manage and manipulate PDF documents" },
   { id: "image", name: "Image Tools", icon: "🖼️", description: "Edit and convert images" },
   { id: "video", name: "Video Tools", icon: "🎥", description: "Process and convert videos" },
+  { id: "audio", name: "Audio Tools", icon: "🔊", description: "Work with audio files" },
   { id: "document", name: "Document Tools", icon: "📝", description: "Work with Word documents" },
   { id: "qrcode", name: "QR Code Tools", icon: "📱", description: "Generate and decode QR codes" },
   { id: "utility", name: "Utility Tools", icon: "🔧", description: "Various file utilities" }
@@ -638,6 +728,14 @@ export function getToolById(id: string): ToolConfig | undefined {
 
 export function getToolsByCategory(category: string): ToolConfig[] {
   return toolsConfig.filter(tool => tool.category === category);
+}
+
+export function getToolsByPhase(phase: number): ToolConfig[] {
+  return toolsConfig.filter(tool => tool.phase === phase);
+}
+
+export function getActiveTools(): ToolConfig[] {
+  return toolsConfig.filter(tool => tool.status === 'active' || !tool.status);
 }
 
 export function getAllCategories() {

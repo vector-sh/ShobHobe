@@ -22,6 +22,8 @@ export async function processFile(
       return processImage(action, files);
     case 'video':
       return processVideo(action, files);
+    case 'audio':
+      return processAudio(action, files);
     case 'document':
       return processDocument(action, files);
     case 'qrcode':
@@ -249,6 +251,11 @@ async function processVideo(action: string, files: File[]): Promise<ProcessResul
   // Video processing would require ffmpeg setup
   // For now, return a placeholder
   throw new Error('Video processing requires ffmpeg configuration. Feature coming soon!');
+}
+
+async function processAudio(action: string, files: File[]): Promise<ProcessResult> {
+  // Audio processing would require ffmpeg setup
+  throw new Error('Audio processing requires ffmpeg configuration. Feature coming soon!');
 }
 
 async function processDocument(action: string, files: File[]): Promise<ProcessResult> {
