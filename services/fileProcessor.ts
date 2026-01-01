@@ -30,6 +30,10 @@ export async function processFile(
       return processSocial(action, files);
     case 'generator':
       return processGenerator(action, files);
+    case 'productivity':
+      return processProductivity(action, files);
+    case 'file-utility':
+      return processFileUtility(action, files);
     case 'qrcode':
       return processQRCode(action, files);
     case 'utility':
@@ -376,4 +380,14 @@ async function processSocial(action: string, files: File[]): Promise<ProcessResu
 async function processGenerator(action: string, files: File[]): Promise<ProcessResult> {
   // Document generation with pdfkit
   throw new Error('Document generator features coming soon! This will create professional documents from templates.');
+}
+
+async function processProductivity(action: string, files: File[]): Promise<ProcessResult> {
+  // Productivity tools like password generator, QR codes, etc.
+  throw new Error('Productivity tools coming soon! Features include password generation, barcode/QR generation, URL shortener, and more.');
+}
+
+async function processFileUtility(action: string, files: File[]): Promise<ProcessResult> {
+  // File utilities like batch rename, file splitter, watermark adder
+  throw new Error('File utility features coming soon! This will include batch rename, file splitting, and watermark addition.');
 }
