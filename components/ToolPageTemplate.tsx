@@ -55,7 +55,17 @@ export default function ToolPageTemplate({ tool }: ToolPageTemplateProps) {
         // Handle file download
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `output${tool.outputType}`;
+        
+        // Parse Content-Disposition header safely
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `output${tool.outputType}`;
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1].replace(/['"]/g, '');
+          }
+        }
+        
         setResult({ url, filename });
       }
     } catch (err) {
