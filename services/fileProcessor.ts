@@ -26,6 +26,10 @@ export async function processFile(
       return processAudio(action, files);
     case 'document':
       return processDocument(action, files);
+    case 'social':
+      return processSocial(action, files);
+    case 'generator':
+      return processGenerator(action, files);
     case 'qrcode':
       return processQRCode(action, files);
     case 'utility':
@@ -362,4 +366,14 @@ async function processUtility(action: string, files: File[]): Promise<ProcessRes
     default:
       throw new Error(`Unsupported utility action: ${action}`);
   }
+}
+
+async function processSocial(action: string, files: File[]): Promise<ProcessResult> {
+  // Social media downloads require external APIs and compliance
+  throw new Error('Social media downloads require API configuration and copyright compliance. Feature coming soon!');
+}
+
+async function processGenerator(action: string, files: File[]): Promise<ProcessResult> {
+  // Document generation with pdfkit
+  throw new Error('Document generator features coming soon! This will create professional documents from templates.');
 }
