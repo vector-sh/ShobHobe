@@ -871,12 +871,545 @@ async function processUtility(action: string, files: File[]): Promise<ProcessRes
 
 async function processSocial(action: string, files: File[]): Promise<ProcessResult> {
   // Social media downloads require external APIs and compliance
-  throw new Error('Social media downloads require API configuration and copyright compliance. Feature coming soon!');
+  // These are placeholder implementations showing the structure
+  
+  switch (action) {
+    case 'download': {
+      const file = files[0];
+      const url = await file.text();
+      
+      // Detect platform from URL
+      let platform = 'unknown';
+      if (url.includes('tiktok.com')) platform = 'TikTok';
+      else if (url.includes('instagram.com')) platform = 'Instagram';
+      else if (url.includes('facebook.com')) platform = 'Facebook';
+      else if (url.includes('twitter.com') || url.includes('x.com')) platform = 'Twitter/X';
+      else if (url.includes('pinterest.com')) platform = 'Pinterest';
+      
+      throw new Error(
+        `${platform} download feature requires:\n` +
+        `1. API keys/authentication for ${platform}\n` +
+        `2. Rate limiting and quota management\n` +
+        `3. Copyright compliance checks\n` +
+        `4. User consent verification\n\n` +
+        `Implementation approach:\n` +
+        `- Use axios for HTTP requests\n` +
+        `- Use cheerio for HTML parsing (if needed)\n` +
+        `- Follow platform's official API guidelines\n` +
+        `- Respect robots.txt and terms of service\n\n` +
+        `Note: Only download content you have rights to use!`
+      );
+    }
+    
+    default:
+      throw new Error(`Social media action "${action}" not yet implemented. Requires API configuration.`);
+  }
 }
 
 async function processGenerator(action: string, files: File[]): Promise<ProcessResult> {
-  // Document generation with pdfkit
-  throw new Error('Document generator features coming soon! This will create professional documents from templates.');
+  const file = files[0];
+  
+  switch (action) {
+    case 'generate-cv': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'cv-resume.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // CV Header
+        doc.fontSize(24).text(data.name || 'Your Name', { align: 'center' });
+        doc.fontSize(12).text(data.email || 'email@example.com', { align: 'center' });
+        doc.text(data.phone || '+1234567890', { align: 'center' });
+        doc.moveDown();
+        
+        // Professional Summary
+        if (data.summary) {
+          doc.fontSize(16).text('Professional Summary', { underline: true });
+          doc.fontSize(11).text(data.summary);
+          doc.moveDown();
+        }
+        
+        // Experience
+        if (data.experience && data.experience.length > 0) {
+          doc.fontSize(16).text('Experience', { underline: true });
+          data.experience.forEach((exp: any) => {
+            doc.fontSize(12).text(`${exp.title} at ${exp.company}`, { bold: true });
+            doc.fontSize(10).text(`${exp.startDate} - ${exp.endDate}`);
+            doc.fontSize(11).text(exp.description || '');
+            doc.moveDown();
+          });
+        }
+        
+        // Education
+        if (data.education && data.education.length > 0) {
+          doc.fontSize(16).text('Education', { underline: true });
+          data.education.forEach((edu: any) => {
+            doc.fontSize(12).text(`${edu.degree} - ${edu.institution}`);
+            doc.fontSize(10).text(edu.year);
+            doc.moveDown();
+          });
+        }
+        
+        // Skills
+        if (data.skills && data.skills.length > 0) {
+          doc.fontSize(16).text('Skills', { underline: true });
+          doc.fontSize(11).text(data.skills.join(', '));
+        }
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-invoice': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'invoice.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Invoice Header
+        doc.fontSize(20).text('INVOICE', { align: 'center' });
+        doc.moveDown();
+        
+        // Company Info
+        doc.fontSize(12).text(data.companyName || 'Company Name', { align: 'left' });
+        doc.fontSize(10).text(data.companyAddress || 'Company Address');
+        doc.moveDown();
+        
+        // Invoice Details
+        doc.text(`Invoice #: ${data.invoiceNumber || '001'}`);
+        doc.text(`Date: ${data.date || new Date().toLocaleDateString()}`);
+        doc.text(`Due Date: ${data.dueDate || 'Net 30'}`);
+        doc.moveDown();
+        
+        // Bill To
+        doc.fontSize(12).text('Bill To:');
+        doc.fontSize(10).text(data.clientName || 'Client Name');
+        doc.text(data.clientAddress || 'Client Address');
+        doc.moveDown();
+        
+        // Items Table Header
+        doc.fontSize(11).text('Description', 50, doc.y, { continued: true, width: 200 });
+        doc.text('Quantity', { continued: true, width: 80 });
+        doc.text('Price', { continued: true, width: 80 });
+        doc.text('Total', { width: 80 });
+        doc.moveDown(0.5);
+        
+        // Line
+        doc.strokeColor('#000000').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(0.5);
+        
+        // Items
+        let total = 0;
+        if (data.items && data.items.length > 0) {
+          data.items.forEach((item: any) => {
+            const itemTotal = (item.quantity || 1) * (item.price || 0);
+            total += itemTotal;
+            
+            doc.fontSize(10).text(item.description || 'Item', 50, doc.y, { continued: true, width: 200 });
+            doc.text(String(item.quantity || 1), { continued: true, width: 80 });
+            doc.text(`$${(item.price || 0).toFixed(2)}`, { continued: true, width: 80 });
+            doc.text(`$${itemTotal.toFixed(2)}`, { width: 80 });
+            doc.moveDown(0.5);
+          });
+        }
+        
+        // Total
+        doc.moveDown();
+        doc.fontSize(12).text(`Total: $${total.toFixed(2)}`, { align: 'right' });
+        
+        // Footer
+        doc.moveDown(2);
+        doc.fontSize(9).text(data.notes || 'Thank you for your business!', { align: 'center' });
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-cover-letter': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ margin: 50 });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'cover-letter.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Sender Info
+        doc.fontSize(11).text(data.yourName || 'Your Name');
+        doc.text(data.yourAddress || 'Your Address');
+        doc.text(data.yourEmail || 'your.email@example.com');
+        doc.text(data.yourPhone || '+1234567890');
+        doc.moveDown();
+        
+        // Date
+        doc.text(new Date().toLocaleDateString(), { align: 'right' });
+        doc.moveDown();
+        
+        // Recipient Info
+        doc.text(data.hiringManager || 'Hiring Manager');
+        doc.text(data.companyName || 'Company Name');
+        doc.text(data.companyAddress || 'Company Address');
+        doc.moveDown();
+        
+        // Salutation
+        doc.text(`Dear ${data.hiringManager || 'Hiring Manager'},`);
+        doc.moveDown();
+        
+        // Body
+        doc.text(
+          data.body || 
+          'I am writing to express my interest in the position at your company. ' +
+          'With my background and skills, I believe I would be a valuable addition to your team.'
+        );
+        doc.moveDown();
+        
+        // Closing
+        doc.text('Sincerely,');
+        doc.moveDown(2);
+        doc.text(data.yourName || 'Your Name');
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-receipt': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'receipt.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Receipt Header
+        doc.fontSize(18).text('RECEIPT', { align: 'center' });
+        doc.moveDown();
+        
+        // Store Info
+        doc.fontSize(12).text(data.storeName || 'Store Name', { align: 'center' });
+        doc.fontSize(10).text(data.storeAddress || 'Store Address', { align: 'center' });
+        doc.moveDown();
+        
+        // Transaction Details
+        doc.text(`Receipt #: ${data.receiptNumber || Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+        doc.text(`Date: ${data.date || new Date().toLocaleString()}`);
+        doc.text(`Cashier: ${data.cashier || 'N/A'}`);
+        doc.moveDown();
+        
+        // Line
+        doc.strokeColor('#000000').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+        
+        // Items
+        let subtotal = 0;
+        if (data.items && data.items.length > 0) {
+          data.items.forEach((item: any) => {
+            const price = item.price || 0;
+            subtotal += price;
+            doc.fontSize(10).text(item.name || 'Item', 50, doc.y, { continued: true, width: 350 });
+            doc.text(`$${price.toFixed(2)}`, { align: 'right' });
+          });
+        }
+        
+        doc.moveDown();
+        doc.strokeColor('#000000').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+        
+        // Totals
+        const tax = subtotal * (data.taxRate || 0.08);
+        const total = subtotal + tax;
+        
+        doc.fontSize(11).text('Subtotal:', 350, doc.y, { continued: true });
+        doc.text(`$${subtotal.toFixed(2)}`, { align: 'right' });
+        doc.text('Tax:', 350, doc.y, { continued: true });
+        doc.text(`$${tax.toFixed(2)}`, { align: 'right' });
+        doc.fontSize(12).text('Total:', 350, doc.y, { continued: true });
+        doc.text(`$${total.toFixed(2)}`, { align: 'right' });
+        
+        // Payment Method
+        doc.moveDown();
+        doc.fontSize(10).text(`Payment: ${data.paymentMethod || 'Cash'}`, { align: 'center' });
+        doc.text('Thank you for your purchase!', { align: 'center' });
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-certificate': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ layout: 'landscape', size: 'A4' });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'certificate.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Certificate Border
+        doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60).stroke();
+        doc.rect(35, 35, doc.page.width - 70, doc.page.height - 70).stroke();
+        
+        doc.moveDown(3);
+        
+        // Certificate Title
+        doc.fontSize(32).text('CERTIFICATE', { align: 'center' });
+        doc.fontSize(20).text('OF ACHIEVEMENT', { align: 'center' });
+        doc.moveDown(2);
+        
+        // Recipient
+        doc.fontSize(14).text('This is to certify that', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(24).text(data.recipientName || 'Recipient Name', { align: 'center', underline: true });
+        doc.moveDown(2);
+        
+        // Achievement
+        doc.fontSize(14).text('has successfully completed', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(18).text(data.courseName || 'Course/Achievement Name', { align: 'center' });
+        doc.moveDown(2);
+        
+        // Date and Signature
+        doc.fontSize(12).text(`Date: ${data.date || new Date().toLocaleDateString()}`, { align: 'center' });
+        doc.moveDown(2);
+        doc.text('_____________________', 200, doc.y);
+        doc.text('_____________________', 500, doc.y - 12);
+        doc.moveDown();
+        doc.fontSize(10).text('Authorized Signature', 200, doc.y);
+        doc.text('Director/Manager', 500, doc.y - 12);
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-business-card': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ size: [252, 144] }); // Business card size (3.5" x 2")
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'business-card.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Background
+        doc.rect(0, 0, 252, 144).fill('#f0f0f0');
+        
+        // Name
+        doc.fillColor('#000000').fontSize(16).text(data.name || 'Your Name', 20, 30, { width: 212 });
+        
+        // Title
+        doc.fontSize(12).text(data.title || 'Job Title', 20, 50, { width: 212 });
+        
+        // Company
+        doc.fontSize(10).text(data.company || 'Company Name', 20, 70, { width: 212 });
+        
+        // Contact Info
+        doc.fontSize(8).text(data.email || 'email@example.com', 20, 95);
+        doc.text(data.phone || '+1234567890', 20, 105);
+        doc.text(data.website || 'www.example.com', 20, 115);
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-letterhead': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'letterhead.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Company Logo/Name Header
+        doc.fontSize(24).text(data.companyName || 'Company Name', { align: 'center' });
+        doc.fontSize(10).text(data.tagline || 'Your Company Tagline', { align: 'center' });
+        doc.moveDown(0.5);
+        
+        // Header Line
+        doc.strokeColor('#333333').lineWidth(2).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+        
+        // Contact Info
+        doc.fontSize(9).text(
+          `${data.address || 'Company Address'} | ${data.phone || 'Phone'} | ${data.email || 'Email'} | ${data.website || 'Website'}`,
+          { align: 'center' }
+        );
+        doc.moveDown(2);
+        
+        // Letter Content Placeholder
+        doc.fontSize(11).text('Letter content goes here...');
+        doc.text('This is a professional letterhead template.');
+        
+        // Footer
+        doc.fontSize(8).text(
+          `${data.companyName || 'Company Name'} | ${data.registrationNumber || 'Reg. No.'}`,
+          50,
+          doc.page.height - 50,
+          { align: 'center' }
+        );
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-notes-to-pdf': {
+      const notes = await file.text();
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'notes.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        doc.fontSize(18).text('Notes', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(11).text(notes);
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-study-guide': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'study-guide.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Study Guide Title
+        doc.fontSize(24).text(data.title || 'Study Guide', { align: 'center' });
+        doc.moveDown(2);
+        
+        // Chapters/Topics
+        if (data.topics && data.topics.length > 0) {
+          data.topics.forEach((topic: any, index: number) => {
+            doc.fontSize(16).text(`${index + 1}. ${topic.title || 'Topic'}`, { underline: true });
+            doc.fontSize(11).text(topic.content || 'Content goes here...');
+            doc.moveDown();
+            
+            // Key Points
+            if (topic.keyPoints && topic.keyPoints.length > 0) {
+              doc.fontSize(12).text('Key Points:', { bold: true });
+              topic.keyPoints.forEach((point: string) => {
+                doc.fontSize(10).text(`• ${point}`);
+              });
+              doc.moveDown();
+            }
+          });
+        }
+        
+        doc.end();
+      });
+    }
+    
+    case 'add-page-numbers': {
+      // Add page numbers to existing PDF
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await PDFDocument.load(arrayBuffer);
+      const pages = pdf.getPages();
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      
+      pages.forEach((page, index) => {
+        const { width, height } = page.getSize();
+        page.drawText(`${index + 1}`, {
+          x: width / 2 - 10,
+          y: 20,
+          size: 10,
+          font,
+          color: rgb(0, 0, 0),
+        });
+      });
+      
+      const pdfBytes = await pdf.save();
+      return {
+        buffer: Buffer.from(pdfBytes),
+        contentType: 'application/pdf',
+        filename: 'numbered.pdf',
+      };
+    }
+    
+    default:
+      throw new Error(`Document generator action "${action}" not yet implemented.`);
+  }
 }
 
 async function processProductivity(action: string, files: File[]): Promise<ProcessResult> {
