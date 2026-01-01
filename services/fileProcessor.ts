@@ -11,6 +11,42 @@ interface ProcessResult {
   filename?: string;
   url?: string;
   message?: string;
+  error?: string;
+  comingSoon?: boolean;
+}
+
+// Helper function to validate file inputs
+function validateFiles(files: File[], minCount: number = 1, maxCount?: number): void {
+  if (!files || !Array.isArray(files)) {
+    throw new Error('Invalid file input: expected array of files');
+  }
+  
+  if (files.length < minCount) {
+    throw new Error(`At least ${minCount} file(s) required`);
+  }
+  
+  if (maxCount && files.length > maxCount) {
+    throw new Error(`Maximum ${maxCount} file(s) allowed`);
+  }
+  
+  // Check if all items are valid File objects
+  for (const file of files) {
+    if (!(file instanceof File)) {
+      throw new Error('Invalid file object in array');
+    }
+    if (!file.size || file.size === 0) {
+      throw new Error(`Empty file detected: ${file.name || 'unknown'}`);
+    }
+  }
+}
+
+// Helper function for "Coming Soon" features
+function comingSoonFeature(featureName: string, requirements?: string): ProcessResult {
+  return {
+    comingSoon: true,
+    message: `🚧 ${featureName} - Coming Soon!\n\n${requirements || 'This feature is currently under development and will be available soon.'}`,
+    error: 'COMING_SOON'
+  };
 }
 
 export async function processFile(
@@ -18,58 +54,94 @@ export async function processFile(
   action: string,
   files: File[]
 ): Promise<ProcessResult> {
-  switch (category) {
-    case 'pdf':
-      return processPDF(action, files);
-    case 'image':
-      return processImage(action, files);
-    case 'video':
-      return processVideo(action, files);
-    case 'audio':
-      return processAudio(action, files);
-    case 'document':
-      return processDocument(action, files);
-    case 'social':
-      return processSocial(action, files);
-    case 'generator':
-      return processGenerator(action, files);
-    case 'productivity':
-      return processProductivity(action, files);
-    case 'file-utility':
-      return processFileUtility(action, files);
-    case 'viral':
-      return processViral(action, files);
-    case 'qrcode':
-      return processQRCode(action, files);
-    case 'utility':
-      return processUtility(action, files);
-    default:
-      throw new Error(`Unsupported category: ${category}`);
+  try {
+    // Validate input parameters
+    if (!category || typeof category !== 'string') {
+      throw new Error('Invalid category parameter');
+    }
+    if (!action || typeof action !== 'string') {
+      throw new Error('Invalid action parameter');
+    }
+    
+    validateFiles(files);
+    
+    switch (category) {
+      case 'pdf':
+        return await processPDF(action, files);
+      case 'image':
+        return await processImage(action, files);
+      case 'video':
+        return await processVideo(action, files);
+      case 'audio':
+        return await processAudio(action, files);
+      case 'document':
+        return await processDocument(action, files);
+      case 'social':
+        return await processSocial(action, files);
+      case 'generator':
+        return await processGenerator(action, files);
+      case 'productivity':
+        return await processProductivity(action, files);
+      case 'file-utility':
+        return await processFileUtility(action, files);
+      case 'viral':
+        return await processViral(action, files);
+      case 'qrcode':
+        return await processQRCode(action, files);
+      case 'utility':
+        return await processUtility(action, files);
+      default:
+        throw new Error(`Unsupported category: ${category}`);
+    }
+  } catch (error) {
+    console.error(`Error processing file - Category: ${category}, Action: ${action}`, error);
+    return {
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      message: `Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
   }
 }
 
 async function processPDF(action: string, files: File[]): Promise<ProcessResult> {
-  const file = files[0];
-  const arrayBuffer = await file.arrayBuffer();
-  
-  switch (action) {
-    case 'merge': {
-      const mergedPdf = await PDFDocument.create();
-      
-      for (const file of files) {
-        const pdfBytes = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(pdfBytes);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
-      }
-      
-      const pdfBytes = await mergedPdf.save();
-      return {
-        buffer: Buffer.from(pdfBytes),
-        contentType: 'application/pdf',
-        filename: 'merged.pdf',
-      };
+  try {
+    validateFiles(files);
+    
+    const file = files[0];
+    if (!file) {
+      throw new Error('No file provided');
     }
+    
+    const arrayBuffer = await file.arrayBuffer();
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Empty or invalid PDF file');
+    }
+    
+    switch (action) {
+      case 'merge': {
+        if (files.length < 2) {
+          throw new Error('At least 2 PDF files required for merging');
+        }
+        
+        const mergedPdf = await PDFDocument.create();
+        
+        for (const file of files) {
+          try {
+            const pdfBytes = await file.arrayBuffer();
+            const pdf = await PDFDocument.load(pdfBytes);
+            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+          } catch (error) {
+            throw new Error(`Failed to process PDF file "${file.name}": ${error instanceof Error ? error.message : 'Invalid PDF'}`);
+          }
+        }
+        
+        const pdfBytes = await mergedPdf.save();
+        return {
+          buffer: Buffer.from(pdfBytes),
+          contentType: 'application/pdf',
+          filename: 'merged.pdf',
+        };
+      }
     
     case 'split': {
       const pdf = await PDFDocument.load(arrayBuffer);
