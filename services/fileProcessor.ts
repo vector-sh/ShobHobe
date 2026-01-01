@@ -1938,6 +1938,235 @@ async function processFileUtility(action: string, files: File[]): Promise<Proces
 }
 
 async function processViral(action: string, files: File[]): Promise<ProcessResult> {
-  // Viral/Niche tools like meme generator, collage maker, GIF maker, background remover
-  throw new Error('Viral/Niche tools coming soon! Features include meme generator, collage maker, GIF maker, background remover, and more creative tools.');
+  const file = files[0];
+  
+  switch (action) {
+    case 'generate-meme': {
+      // Meme generator - add text overlay to images
+      const arrayBuffer = await file.arrayBuffer();
+      const topText = 'TOP TEXT'; // TODO: get from form data
+      const bottomText = 'BOTTOM TEXT'; // TODO: get from form data
+      
+      const image = sharp(arrayBuffer);
+      const metadata = await image.metadata();
+      const width = metadata.width || 800;
+      const height = metadata.height || 600;
+      
+      // Create SVG text overlays for meme format
+      const svgTop = `
+        <svg width="${width}" height="100">
+          <style>
+            .meme-text { 
+              font-family: Impact, Arial Black, sans-serif; 
+              font-size: 48px; 
+              font-weight: bold;
+              fill: white;
+              stroke: black;
+              stroke-width: 2px;
+              text-anchor: middle;
+            }
+          </style>
+          <text x="${width/2}" y="60" class="meme-text">${topText}</text>
+        </svg>
+      `;
+      
+      const svgBottom = `
+        <svg width="${width}" height="100">
+          <style>
+            .meme-text { 
+              font-family: Impact, Arial Black, sans-serif; 
+              font-size: 48px; 
+              font-weight: bold;
+              fill: white;
+              stroke: black;
+              stroke-width: 2px;
+              text-anchor: middle;
+            }
+          </style>
+          <text x="${width/2}" y="60" class="meme-text">${bottomText}</text>
+        </svg>
+      `;
+      
+      const processedImage = await image
+        .composite([
+          { input: Buffer.from(svgTop), top: 10, left: 0 },
+          { input: Buffer.from(svgBottom), top: height - 90, left: 0 }
+        ])
+        .png()
+        .toBuffer();
+      
+      return {
+        buffer: processedImage,
+        contentType: 'image/png',
+        filename: 'meme.png',
+      };
+    }
+    
+    case 'make-collage': {
+      // Image collage maker - combine multiple images
+      if (files.length < 2) {
+        throw new Error('Please upload at least 2 images to create a collage');
+      }
+      
+      // Simple 2x2 grid collage
+      const images = await Promise.all(
+        files.slice(0, 4).map(async (f) => {
+          const buffer = await f.arrayBuffer();
+          return sharp(buffer).resize(400, 400, { fit: 'cover' }).toBuffer();
+        })
+      );
+      
+      const cols = Math.ceil(Math.sqrt(images.length));
+      const rows = Math.ceil(images.length / cols);
+      
+      // Create collage composite
+      const collage = sharp({
+        create: {
+          width: cols * 400,
+          height: rows * 400,
+          channels: 3,
+          background: { r: 255, g: 255, b: 255 }
+        }
+      });
+      
+      const composites = images.map((img, i) => ({
+        input: img,
+        top: Math.floor(i / cols) * 400,
+        left: (i % cols) * 400
+      }));
+      
+      const collageBuffer = await collage.composite(composites).png().toBuffer();
+      
+      return {
+        buffer: collageBuffer,
+        contentType: 'image/png',
+        filename: 'collage.png',
+      };
+    }
+    
+    case 'make-gif': {
+      // GIF maker - requires ffmpeg for proper implementation
+      throw new Error('GIF creation requires ffmpeg to be installed on the server. Implementation guide: Install fluent-ffmpeg and ffmpeg binary, then use: ffmpeg().input(frames).outputOptions(\'-loop\', \'0\').save(\'output.gif\')');
+    }
+    
+    case 'remove-background': {
+      // Background remover - requires AI model
+      throw new Error('Background removal requires @imgly/background-removal library with AI model. Implementation guide: import { removeBackground } from \'@imgly/background-removal\'; const blob = await removeBackground(imageBlob); This requires downloading a 50MB+ ML model.');
+    }
+    
+    case 'convert-image-to-pdf': {
+      // Convert images to PDF
+      const pdfDoc = await PDFDocument.create();
+      
+      for (const imageFile of files) {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const imageBytes = new Uint8Array(arrayBuffer);
+        
+        let embeddedImage;
+        const fileName = imageFile.name.toLowerCase();
+        
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          embeddedImage = await pdfDoc.embedJpg(imageBytes);
+        } else if (fileName.endsWith('.png')) {
+          embeddedImage = await pdfDoc.embedPng(imageBytes);
+        } else {
+          // Convert to PNG using sharp for other formats
+          const pngBuffer = await sharp(arrayBuffer).png().toBuffer();
+          embeddedImage = await pdfDoc.embedPng(pngBuffer);
+        }
+        
+        const page = pdfDoc.addPage([embeddedImage.width, embeddedImage.height]);
+        page.drawImage(embeddedImage, {
+          x: 0,
+          y: 0,
+          width: embeddedImage.width,
+          height: embeddedImage.height,
+        });
+      }
+      
+      const pdfBytes = await pdfDoc.save();
+      return {
+        buffer: Buffer.from(pdfBytes),
+        contentType: 'application/pdf',
+        filename: 'images.pdf',
+      };
+    }
+    
+    case 'extract-pdf-images': {
+      // Extract images from PDF - complex operation requiring PDF image extraction
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      
+      throw new Error('PDF image extraction requires advanced PDF parsing. Implementation guide: Use pdf-parse or pdf.js to extract embedded images. The PDF structure needs to be parsed to find image objects (XObject with Subtype /Image), then decode them based on their filter (FlateDecode, DCTDecode, etc.).');
+    }
+    
+    case 'convert-epub-to-pdf': {
+      // EPUB to PDF converter
+      throw new Error('EPUB conversion requires epub parsing library. Implementation guide: 1) Install \'epub\' package, 2) Parse EPUB structure (extract HTML/XHTML files), 3) Convert each chapter to PDF using pdfkit, 4) Merge chapters. Sample: const EPub = require(\'epub\'); const epub = new EPub(file); epub.parse() then iterate through chapters.');
+    }
+    
+    case 'change-voice': {
+      // Voice changer - requires ffmpeg
+      throw new Error('Voice changing requires ffmpeg audio processing. Implementation guide: Use fluent-ffmpeg with audio filters like: ffmpeg().input(audioFile).audioFilters([\'atempo=1.5\', \'asetrate=44100*1.2\']).save(output). Requires ffmpeg binary installed on server.');
+    }
+    
+    case 'generate-poll': {
+      // Poll/Survey generator PDF
+      const pollData = {
+        title: 'Sample Poll',
+        questions: [
+          { text: 'Question 1: How satisfied are you?', options: ['Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied'] },
+          { text: 'Question 2: Would you recommend us?', options: ['Yes', 'No', 'Maybe'] }
+        ]
+      };
+      // TODO: Parse pollData from request
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ size: 'A4', margin: 50 });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'poll.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Title
+        doc.fontSize(24).font('Helvetica-Bold').text(pollData.title, { align: 'center' });
+        doc.moveDown(2);
+        
+        // Questions
+        pollData.questions.forEach((q, i) => {
+          doc.fontSize(14).font('Helvetica-Bold').text(q.text);
+          doc.moveDown(0.5);
+          
+          q.options.forEach((option) => {
+            doc.fontSize(12).font('Helvetica')
+              .text(`☐  ${option}`, { indent: 20 });
+            doc.moveDown(0.3);
+          });
+          
+          doc.moveDown(1.5);
+        });
+        
+        // Footer
+        doc.moveDown(2);
+        doc.fontSize(10).font('Helvetica').text('Thank you for your feedback!', { align: 'center' });
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-signature': {
+      // Digital signature generator using canvas
+      throw new Error('Signature generation requires canvas or HTML5 canvas API. Implementation guide: Use \'canvas\' npm package to create a signature pad. Example: const { createCanvas } = require(\'canvas\'); const canvas = createCanvas(400, 150); const ctx = canvas.getContext(\'2d\'); Draw signature paths then export: canvas.toBuffer(\'image/png\')');
+    }
+    
+    default:
+      throw new Error(`Unsupported viral/niche action: ${action}`);
+  }
 }
