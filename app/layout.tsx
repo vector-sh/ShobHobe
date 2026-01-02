@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
+import AdBlockDetector from "@/components/AdBlockDetector";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -15,7 +17,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "ShobHobe - Universal File Processing Toolkit",
-  description: "60+ powerful tools for PDF, images, videos, documents, QR codes, and more. Process files quickly and securely.",
+  description: "107+ powerful tools for PDF, images, videos, documents, QR codes, and more. Process files quickly and securely. All tools 100% free!",
 };
 
 export default function RootLayout({
@@ -25,10 +27,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Google AdSense Script */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <AdBlockDetector />
       </body>
     </html>
   );
