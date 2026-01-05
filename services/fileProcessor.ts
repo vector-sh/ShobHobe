@@ -354,6 +354,9 @@ async function processPDF(action: string, files: File[]): Promise<ProcessResult>
     default:
       throw new Error(`Unsupported PDF action: ${action}`);
   }
+  } catch (error) {
+    throw new Error(`Failed to process PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 async function processImage(action: string, files: File[]): Promise<ProcessResult> {

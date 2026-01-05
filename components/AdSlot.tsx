@@ -18,6 +18,7 @@ export default function AdSlot({
   useEffect(() => {
     try {
       // Push ad to AdSense
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
     } catch (err) {
       console.error('AdSense error:', err);
