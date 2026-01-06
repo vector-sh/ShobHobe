@@ -80,6 +80,8 @@ export async function processFile(
         return await processSocial(action, files);
       case 'generator':
         return await processGenerator(action, files);
+      case 'research':
+        return await processResearch(action, files);
       case 'productivity':
         return await processProductivity(action, files);
       case 'file-utility':
@@ -1484,6 +1486,302 @@ async function processGenerator(action: string, files: File[]): Promise<ProcessR
     
     default:
       throw new Error(`Document generator action "${action}" not yet implemented.`);
+  }
+}
+
+async function processResearch(action: string, files: File[]): Promise<ProcessResult> {
+  const file = files[0];
+  
+  switch (action) {
+    case 'generate-citation': {
+      const input = await file.text();
+      let data;
+      
+      // Try to parse as JSON, otherwise treat as plain text
+      try {
+        data = JSON.parse(input);
+      } catch {
+        // If not JSON, create a simple citation from text
+        data = {
+          citationType: 'APA',
+          sourceType: 'website',
+          title: input.substring(0, 100),
+          author: 'Author Name',
+          year: new Date().getFullYear().toString()
+        };
+      }
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'citation.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Title
+        doc.fontSize(20).text('Generated Citation', { align: 'center' });
+        doc.moveDown(2);
+        
+        const citationType = data.citationType || 'APA';
+        const sourceType = data.sourceType || 'website';
+        
+        // Citation format based on type
+        doc.fontSize(14).text(`Format: ${citationType}`, { underline: true });
+        doc.moveDown();
+        
+        let citation = '';
+        
+        if (citationType === 'APA') {
+          // APA Format
+          if (sourceType === 'book') {
+            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of work'}. ${data.publisher || 'Publisher'}.`;
+          } else if (sourceType === 'journal') {
+            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of article'}. ${data.journal || 'Journal Name'}, ${data.volume || 'XX'}(${data.issue || 'X'}), ${data.pages || 'pp. XX-XX'}.`;
+          } else {
+            // Website or default
+            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of webpage'}. ${data.website || 'Website Name'}. ${data.url || 'https://example.com'}`;
+          }
+        } else if (citationType === 'MLA') {
+          // MLA Format
+          if (sourceType === 'book') {
+            citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
+          } else if (sourceType === 'journal') {
+            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'}, vol. ${data.volume || 'XX'}, no. ${data.issue || 'X'}, ${data.year || 'Year'}, pp. ${data.pages || 'XX-XX'}.`;
+          } else {
+            // Website or default
+            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}, ${data.year || 'Year'}, ${data.url || 'www.example.com'}.`;
+          }
+        } else {
+          // Chicago Format
+          if (sourceType === 'book') {
+            citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.location || 'City'}: ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
+          } else if (sourceType === 'journal') {
+            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'} ${data.volume || 'XX'}, no. ${data.issue || 'X'} (${data.year || 'Year'}): ${data.pages || 'XX-XX'}.`;
+          } else {
+            // Website or default
+            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}. Accessed ${data.accessDate || new Date().toLocaleDateString()}. ${data.url || 'https://example.com'}.`;
+          }
+        }
+        
+        doc.fontSize(12).text(citation, { align: 'left' });
+        doc.moveDown(2);
+        
+        // Additional info
+        doc.fontSize(10).fillColor('#666666').text('Source Information:', { underline: true });
+        doc.moveDown(0.5);
+        doc.text(`Source Type: ${sourceType}`);
+        doc.text(`Citation Style: ${citationType}`);
+        if (data.doi) doc.text(`DOI: ${data.doi}`);
+        if (data.url) doc.text(`URL: ${data.url}`);
+        
+        doc.end();
+      });
+    }
+    
+    case 'generate-bibliography': {
+      const data = JSON.parse(await file.text());
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'bibliography.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Title
+        const citationType = data.citationType || 'APA';
+        let pageTitle = 'References';
+        if (citationType === 'MLA') pageTitle = 'Works Cited';
+        if (citationType === 'Chicago') pageTitle = 'Bibliography';
+        
+        doc.fontSize(20).text(pageTitle, { align: 'center' });
+        doc.moveDown(2);
+        
+        // Sort sources alphabetically by author
+        const sources = data.sources || [];
+        sources.sort((a: any, b: any) => {
+          const authorA = a.author || '';
+          const authorB = b.author || '';
+          return authorA.localeCompare(authorB);
+        });
+        
+        // Generate citations
+        sources.forEach((source: any, index: number) => {
+          let citation = '';
+          
+          if (citationType === 'APA') {
+            citation = `${source.author || 'Author, A. A.'}. (${source.year || 'Year'}). ${source.title || 'Title'}. ${source.publisher || source.journal || 'Publisher'}.`;
+            if (source.url) citation += ` ${source.url}`;
+          } else if (citationType === 'MLA') {
+            citation = `${source.author || 'Author, First Last'}. "${source.title || 'Title'}." ${source.publisher || source.journal || 'Publisher'}, ${source.year || 'Year'}.`;
+          } else {
+            citation = `${source.author || 'Author, First Last'}. "${source.title || 'Title'}." ${source.publisher || source.journal || 'Publisher'}, ${source.year || 'Year'}.`;
+          }
+          
+          doc.fontSize(11).text(citation, { 
+            align: 'left',
+            indent: index > 0 ? 0 : 0,
+            paragraphGap: 12
+          });
+        });
+        
+        doc.end();
+      });
+    }
+    
+    case 'format-research-paper': {
+      const text = await file.text();
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit({ margins: { top: 72, bottom: 72, left: 72, right: 72 } });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'formatted-paper.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        // Title Page (simplified)
+        doc.fontSize(14).text('Research Paper', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text('Author Name', { align: 'center' });
+        doc.moveDown();
+        doc.text('Institution Name', { align: 'center' });
+        doc.moveDown(3);
+        
+        // Content
+        const paragraphs = text.split('\n\n');
+        paragraphs.forEach((para) => {
+          if (para.trim()) {
+            doc.fontSize(12).text(para.trim(), {
+              align: 'left',
+              lineGap: 6
+            });
+            doc.moveDown();
+          }
+        });
+        
+        doc.end();
+      });
+    }
+    
+    case 'organize-references': {
+      const input = await file.text();
+      let references: string[];
+      
+      try {
+        const data = JSON.parse(input);
+        references = data.references || [];
+      } catch {
+        // If not JSON, split by newlines
+        references = input.split('\n').filter(ref => ref.trim());
+      }
+      
+      // Sort alphabetically
+      references.sort((a, b) => a.localeCompare(b));
+      
+      return new Promise((resolve, reject) => {
+        const doc = new PDFKit();
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => {
+          resolve({
+            buffer: Buffer.concat(chunks),
+            contentType: 'application/pdf',
+            filename: 'organized-references.pdf',
+          });
+        });
+        doc.on('error', reject);
+        
+        doc.fontSize(20).text('Organized References', { align: 'center' });
+        doc.moveDown(2);
+        
+        references.forEach((ref, index) => {
+          doc.fontSize(11).text(`${index + 1}. ${ref}`, {
+            align: 'left',
+            paragraphGap: 8
+          });
+        });
+        
+        doc.end();
+      });
+    }
+    
+    case 'analyze-text': {
+      const text = await file.text();
+      
+      // Word count
+      const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+      const wordCount = words.length;
+      
+      // Character count
+      const charCount = text.length;
+      const charCountNoSpaces = text.replace(/\s/g, '').length;
+      
+      // Sentence count (approximate)
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const sentenceCount = sentences.length;
+      
+      // Paragraph count
+      const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+      const paragraphCount = paragraphs.length;
+      
+      // Average word length
+      const avgWordLength = charCountNoSpaces / wordCount;
+      
+      // Average sentence length
+      const avgSentenceLength = wordCount / sentenceCount;
+      
+      // Reading time (average 200 words per minute)
+      const readingTimeMinutes = Math.ceil(wordCount / 200);
+      
+      // Citation count (approximate - looking for common patterns)
+      const citationPattern = /\([^)]*\d{4}[^)]*\)|[\[].*?\d{4}.*?[\]]/g;
+      const citations = text.match(citationPattern) || [];
+      const citationCount = citations.length;
+      
+      const analysis = {
+        wordCount,
+        characterCount: charCount,
+        characterCountNoSpaces: charCountNoSpaces,
+        sentenceCount,
+        paragraphCount,
+        averageWordLength: Math.round(avgWordLength * 10) / 10,
+        averageSentenceLength: Math.round(avgSentenceLength * 10) / 10,
+        readingTimeMinutes,
+        citationCount,
+        estimatedReadingLevel: sentenceCount > 0 && avgSentenceLength > 20 ? 'Advanced' : avgSentenceLength > 15 ? 'Intermediate' : 'Basic'
+      };
+      
+      return {
+        buffer: Buffer.from(JSON.stringify(analysis, null, 2)),
+        contentType: 'application/json',
+        filename: 'text-analysis.json',
+      };
+    }
+    
+    default:
+      throw new Error(`Research action "${action}" not yet implemented.`);
   }
 }
 

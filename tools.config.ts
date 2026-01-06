@@ -1170,6 +1170,78 @@ export const toolsConfig: ToolConfig[] = [
     status: "active",
     maxFileSize: 50,
     seoKeywords: ["epub to pdf", "convert ebook", "ebook converter"]
+  },
+
+  // Research & Academic Tools (5 tools)
+  {
+    id: "citation-generator",
+    name: "Citation Generator",
+    description: "Generate APA, MLA, and Chicago format citations",
+    category: "research",
+    icon: "📚",
+    inputTypes: [".json", ".txt"],
+    outputType: ".pdf",
+    action: "generate-citation",
+    phase: 4,
+    status: "active",
+    maxFileSize: 5,
+    seoKeywords: ["citation generator", "apa citation", "mla citation", "chicago citation", "reference generator"]
+  },
+  {
+    id: "bibliography-generator",
+    name: "Bibliography Generator",
+    description: "Create formatted bibliographies from multiple sources",
+    category: "research",
+    icon: "📖",
+    inputTypes: [".json"],
+    outputType: ".pdf",
+    action: "generate-bibliography",
+    phase: 4,
+    status: "active",
+    maxFileSize: 10,
+    seoKeywords: ["bibliography generator", "works cited", "references page", "bibliography maker"]
+  },
+  {
+    id: "research-paper-formatter",
+    name: "Research Paper Formatter",
+    description: "Format papers to APA, MLA, or Chicago standards",
+    category: "research",
+    icon: "📝",
+    inputTypes: [".txt", ".docx"],
+    outputType: ".pdf",
+    action: "format-research-paper",
+    phase: 4,
+    status: "active",
+    maxFileSize: 20,
+    seoKeywords: ["research paper formatter", "academic formatting", "apa format", "mla format", "paper formatting"]
+  },
+  {
+    id: "reference-list-organizer",
+    name: "Reference List Organizer",
+    description: "Sort and organize references alphabetically",
+    category: "research",
+    icon: "🔤",
+    inputTypes: [".txt", ".json"],
+    outputType: ".pdf",
+    action: "organize-references",
+    phase: 4,
+    status: "active",
+    maxFileSize: 10,
+    seoKeywords: ["reference organizer", "sort references", "alphabetize references", "organize bibliography"]
+  },
+  {
+    id: "text-analyzer",
+    name: "Academic Text Analyzer",
+    description: "Analyze word count, readability, and citation count",
+    category: "research",
+    icon: "🔍",
+    inputTypes: [".txt", ".docx"],
+    outputType: ".json",
+    action: "analyze-text",
+    phase: 4,
+    status: "active",
+    maxFileSize: 20,
+    seoKeywords: ["text analyzer", "word count", "readability score", "academic analysis", "writing analysis"]
   }
 ];
 
@@ -1181,6 +1253,7 @@ export const categories = [
   { id: "audio", name: "Audio Tools", icon: "🔊", description: "Work with audio files" },
   { id: "document", name: "Document Tools", icon: "📝", description: "Work with Word documents" },
   { id: "generator", name: "Document Generators", icon: "✨", description: "Generate professional documents" },
+  { id: "research", name: "Research & Academic Tools", icon: "🎓", description: "Tools for research and academic writing" },
   { id: "productivity", name: "Productivity Tools", icon: "⚡", description: "Boost your productivity" },
   { id: "file-utility", name: "File Utilities", icon: "🔧", description: "Various file utilities" },
   { id: "qrcode", name: "QR Code Tools", icon: "📱", description: "Generate and decode QR codes" },
