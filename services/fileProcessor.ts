@@ -354,6 +354,9 @@ async function processPDF(action: string, files: File[]): Promise<ProcessResult>
     default:
       throw new Error(`Unsupported PDF action: ${action}`);
   }
+  } catch (error) {
+    throw new Error(`Failed to process PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 async function processImage(action: string, files: File[]): Promise<ProcessResult> {
@@ -1016,7 +1019,7 @@ async function processGenerator(action: string, files: File[]): Promise<ProcessR
         if (data.experience && data.experience.length > 0) {
           doc.fontSize(16).text('Experience', { underline: true });
           data.experience.forEach((exp: any) => {
-            doc.fontSize(12).text(`${exp.title} at ${exp.company}`, { bold: true });
+            doc.fontSize(12).text(`${exp.title} at ${exp.company}`);
             doc.fontSize(10).text(`${exp.startDate} - ${exp.endDate}`);
             doc.fontSize(11).text(exp.description || '');
             doc.moveDown();
@@ -1440,7 +1443,7 @@ async function processGenerator(action: string, files: File[]): Promise<ProcessR
             
             // Key Points
             if (topic.keyPoints && topic.keyPoints.length > 0) {
-              doc.fontSize(12).text('Key Points:', { bold: true });
+              doc.fontSize(12).text('Key Points:');
               topic.keyPoints.forEach((point: string) => {
                 doc.fontSize(10).text(`• ${point}`);
               });
@@ -1592,7 +1595,7 @@ async function processProductivity(action: string, files: File[]): Promise<Proce
           hasSpecialChars,
           minLength: length >= 8,
         },
-        suggestions: []
+        suggestions: [] as string[]
       };
       
       if (!hasUppercase) result.suggestions.push('Add uppercase letters');

@@ -11,7 +11,7 @@ export default function AdBlockDetector() {
     const checkAdBlock = async () => {
       try {
         // Try to fetch a typical ad script URL
-        const response = await fetch(
+        await fetch(
           'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
           {
             method: 'HEAD',
@@ -21,7 +21,7 @@ export default function AdBlockDetector() {
         
         // If we reach here without error, ads might be working
         setAdBlockDetected(false);
-      } catch (error) {
+      } catch {
         // If fetch fails, ad blocker is likely active
         setAdBlockDetected(true);
       }
