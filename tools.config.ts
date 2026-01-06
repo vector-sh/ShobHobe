@@ -1176,16 +1176,18 @@ export const toolsConfig: ToolConfig[] = [
   {
     id: "citation-generator",
     name: "Citation Generator",
-    description: "Generate APA, MLA, and Chicago format citations",
+    description: "Generate citations from URLs - auto-fetch metadata",
     category: "research",
     icon: "📚",
-    inputTypes: [".json", ".txt"],
+    inputTypes: [],
     outputType: ".pdf",
     action: "generate-citation",
     phase: 4,
     status: "active",
-    maxFileSize: 5,
-    seoKeywords: ["citation generator", "apa citation", "mla citation", "chicago citation", "reference generator"]
+    maxFileSize: 1,
+    seoKeywords: ["citation generator", "apa citation", "mla citation", "chicago citation", "reference generator"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://example.com/article or DOI: 10.1234/example"
   },
   {
     id: "bibliography-generator",

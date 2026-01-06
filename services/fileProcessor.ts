@@ -1511,6 +1511,111 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
         };
       }
       
+      // If URL is provided, try to fetch metadata
+      if (data.url) {
+        try {
+          // Use axios to fetch the webpage
+          const axios = await import('axios');
+          const cheerio = await import('cheerio');
+          
+          const response = await axios.default.get(data.url, {
+            timeout: 10000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          
+          const $ = cheerio.load(response.data);
+          
+          // Extract metadata from meta tags
+          const title = $('meta[property="og:title"]').attr('content') 
+                     || $('meta[name="title"]').attr('content')
+                     || $('title').text()
+                     || data.title;
+          
+          const author = $('meta[name="author"]').attr('content')
+                      || $('meta[property="article:author"]').attr('content')
+                      || data.author;
+          
+          const publishDate = $('meta[property="article:published_time"]').attr('content')
+                           || $('meta[name="date"]').attr('content');
+          
+          const siteName = $('meta[property="og:site_name"]').attr('content')
+                        || new URL(data.url).hostname.replace('www.', '');
+          
+          const description = $('meta[name="description"]').attr('content')
+                           || $('meta[property="og:description"]').attr('content');
+          
+          // Update data with fetched metadata
+          data.title = title || data.title || 'Untitled';
+          data.author = author || data.author || 'Unknown Author';
+          data.website = siteName || data.website;
+          data.description = description;
+          
+          // Extract year from publish date if available
+          if (publishDate) {
+            const yearMatch = publishDate.match(/\d{4}/);
+            if (yearMatch) {
+              data.year = yearMatch[0];
+            }
+          }
+          
+          // Set access date
+          data.accessDate = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+        } catch (fetchError) {
+          // If fetching fails, use provided data or defaults
+          console.error('Failed to fetch metadata:', fetchError);
+        }
+      }
+      
+      const citationType = data.citationType || 'APA';
+      const sourceType = data.sourceType || 'website';
+      
+      // Generate citation text
+      let citation = '';
+      
+      if (citationType === 'APA') {
+        // APA Format
+        if (sourceType === 'book') {
+          citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of work'}. ${data.publisher || 'Publisher'}.`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of article'}. ${data.journal || 'Journal Name'}, ${data.volume || 'XX'}(${data.issue || 'X'}), ${data.pages || 'pp. XX-XX'}.`;
+        } else {
+          // Website or default
+          const year = data.year || 'n.d.';
+          const retrievedDate = data.accessDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          citation = `${data.author || 'Author, A. A.'}. (${year}). ${data.title || 'Title of webpage'}. ${data.website || 'Website Name'}. Retrieved ${retrievedDate}, from ${data.url || 'https://example.com'}`;
+        }
+      } else if (citationType === 'MLA') {
+        // MLA Format
+        if (sourceType === 'book') {
+          citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'}, vol. ${data.volume || 'XX'}, no. ${data.issue || 'X'}, ${data.year || 'Year'}, pp. ${data.pages || 'XX-XX'}.`;
+        } else {
+          // Website or default
+          const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+          citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}, ${data.year || 'n.d.'}, ${data.url || 'www.example.com'}. Accessed ${accessDate}.`;
+        }
+      } else {
+        // Chicago Format
+        if (sourceType === 'book') {
+          citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.location || 'City'}: ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'} ${data.volume || 'XX'}, no. ${data.issue || 'X'} (${data.year || 'Year'}): ${data.pages || 'XX-XX'}.`;
+        } else {
+          // Website or default
+          const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}. Accessed ${accessDate}. ${data.url || 'https://example.com'}.`;
+        }
+      }
+      
+      // Return both JSON (with citation text) and PDF
       return new Promise((resolve, reject) => {
         const doc = new PDFKit();
         const chunks: Buffer[] = [];
@@ -1520,7 +1625,7 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
           resolve({
             buffer: Buffer.concat(chunks),
             contentType: 'application/pdf',
-            filename: 'citation.pdf',
+            filename: `citation-${citationType.toLowerCase()}.pdf`,
           });
         });
         doc.on('error', reject);
@@ -1529,47 +1634,11 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
         doc.fontSize(20).text('Generated Citation', { align: 'center' });
         doc.moveDown(2);
         
-        const citationType = data.citationType || 'APA';
-        const sourceType = data.sourceType || 'website';
-        
-        // Citation format based on type
+        // Citation format header
         doc.fontSize(14).text(`Format: ${citationType}`, { underline: true });
         doc.moveDown();
         
-        let citation = '';
-        
-        if (citationType === 'APA') {
-          // APA Format
-          if (sourceType === 'book') {
-            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of work'}. ${data.publisher || 'Publisher'}.`;
-          } else if (sourceType === 'journal') {
-            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of article'}. ${data.journal || 'Journal Name'}, ${data.volume || 'XX'}(${data.issue || 'X'}), ${data.pages || 'pp. XX-XX'}.`;
-          } else {
-            // Website or default
-            citation = `${data.author || 'Author, A. A.'}. (${data.year || 'Year'}). ${data.title || 'Title of webpage'}. ${data.website || 'Website Name'}. ${data.url || 'https://example.com'}`;
-          }
-        } else if (citationType === 'MLA') {
-          // MLA Format
-          if (sourceType === 'book') {
-            citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
-          } else if (sourceType === 'journal') {
-            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'}, vol. ${data.volume || 'XX'}, no. ${data.issue || 'X'}, ${data.year || 'Year'}, pp. ${data.pages || 'XX-XX'}.`;
-          } else {
-            // Website or default
-            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}, ${data.year || 'Year'}, ${data.url || 'www.example.com'}.`;
-          }
-        } else {
-          // Chicago Format
-          if (sourceType === 'book') {
-            citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.location || 'City'}: ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
-          } else if (sourceType === 'journal') {
-            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Article'}." ${data.journal || 'Journal Name'} ${data.volume || 'XX'}, no. ${data.issue || 'X'} (${data.year || 'Year'}): ${data.pages || 'XX-XX'}.`;
-          } else {
-            // Website or default
-            citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}. Accessed ${data.accessDate || new Date().toLocaleDateString()}. ${data.url || 'https://example.com'}.`;
-          }
-        }
-        
+        // The citation
         doc.fontSize(12).text(citation, { align: 'left' });
         doc.moveDown(2);
         
@@ -1578,8 +1647,12 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
         doc.moveDown(0.5);
         doc.text(`Source Type: ${sourceType}`);
         doc.text(`Citation Style: ${citationType}`);
+        if (data.title) doc.text(`Title: ${data.title}`);
+        if (data.author) doc.text(`Author: ${data.author}`);
+        if (data.year) doc.text(`Year: ${data.year}`);
         if (data.doi) doc.text(`DOI: ${data.doi}`);
         if (data.url) doc.text(`URL: ${data.url}`);
+        if (data.accessDate) doc.text(`Access Date: ${data.accessDate}`);
         
         doc.end();
       });
