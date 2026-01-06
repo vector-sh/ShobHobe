@@ -12,6 +12,8 @@ export interface ToolConfig {
   maxFileSize?: number;
   requiresDisclaimer?: boolean;
   seoKeywords?: string[];
+  acceptsUrl?: boolean; // Flag to indicate this tool accepts URL input instead of file upload
+  urlPlaceholder?: string; // Placeholder text for URL input
 }
 
 export const toolsConfig: ToolConfig[] = [
@@ -718,14 +720,16 @@ export const toolsConfig: ToolConfig[] = [
     description: "Download public TikTok videos",
     category: "social",
     icon: "🎵",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".mp4",
     action: "download",
     phase: 2,
     status: "active",
     maxFileSize: 1,
     requiresDisclaimer: true,
-    seoKeywords: ["tiktok downloader", "download tiktok video", "tiktok video saver"]
+    seoKeywords: ["tiktok downloader", "download tiktok video", "tiktok video saver"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://www.tiktok.com/@username/video/1234567890"
   },
   {
     id: "instagram-download",
@@ -733,14 +737,16 @@ export const toolsConfig: ToolConfig[] = [
     description: "Download public Instagram media",
     category: "social",
     icon: "📷",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".mp4",
     action: "download",
     phase: 2,
     status: "active",
     maxFileSize: 1,
     requiresDisclaimer: true,
-    seoKeywords: ["instagram downloader", "download instagram", "ig video download"]
+    seoKeywords: ["instagram downloader", "download instagram", "ig video download"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://www.instagram.com/p/ABC123/"
   },
   {
     id: "facebook-download",
@@ -748,14 +754,16 @@ export const toolsConfig: ToolConfig[] = [
     description: "Download public Facebook videos",
     category: "social",
     icon: "📘",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".mp4",
     action: "download",
     phase: 2,
     status: "active",
     maxFileSize: 1,
     requiresDisclaimer: true,
-    seoKeywords: ["facebook downloader", "download facebook video", "fb video saver"]
+    seoKeywords: ["facebook downloader", "download facebook video", "fb video saver"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://www.facebook.com/watch/?v=1234567890"
   },
   {
     id: "twitter-download",
@@ -763,14 +771,16 @@ export const toolsConfig: ToolConfig[] = [
     description: "Download Twitter/X media",
     category: "social",
     icon: "🐦",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".mp4",
     action: "download",
     phase: 2,
     status: "active",
     maxFileSize: 1,
     requiresDisclaimer: true,
-    seoKeywords: ["twitter downloader", "download twitter video", "x video download"]
+    seoKeywords: ["twitter downloader", "download twitter video", "x video download"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://twitter.com/username/status/1234567890"
   },
   {
     id: "pinterest-download",
@@ -778,14 +788,16 @@ export const toolsConfig: ToolConfig[] = [
     description: "Download Pinterest images",
     category: "social",
     icon: "📌",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".jpg",
     action: "download",
     phase: 2,
     status: "active",
     maxFileSize: 1,
     requiresDisclaimer: true,
-    seoKeywords: ["pinterest downloader", "download pinterest image", "pinterest saver"]
+    seoKeywords: ["pinterest downloader", "download pinterest image", "pinterest saver"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://www.pinterest.com/pin/1234567890/"
   },
 
   // Phase 2: Document Generators (10 tools)
@@ -930,7 +942,7 @@ export const toolsConfig: ToolConfig[] = [
     seoKeywords: ["add page numbers", "pdf page numbers", "number pdf pages"]
   },
 
-  // Phase 3: Productivity Tools (10 tools)
+  // Phase 3: Productivity Tools (Useful tools only)
   {
     id: "barcode-generator",
     name: "Barcode Generator",
@@ -1002,34 +1014,6 @@ export const toolsConfig: ToolConfig[] = [
     seoKeywords: ["color palette", "color scheme", "extract colors"]
   },
   {
-    id: "stopwatch",
-    name: "Stopwatch/Timer",
-    description: "Browser-based timer",
-    category: "productivity",
-    icon: "⏱️",
-    inputTypes: [],
-    outputType: ".txt",
-    action: "timer",
-    phase: 3,
-    status: "active",
-    maxFileSize: 1,
-    seoKeywords: ["stopwatch", "timer", "countdown"]
-  },
-  {
-    id: "habit-tracker",
-    name: "Habit Tracker",
-    description: "Track habits and export to PDF",
-    category: "productivity",
-    icon: "✅",
-    inputTypes: [".json"],
-    outputType: ".pdf",
-    action: "track-habits",
-    phase: 3,
-    status: "active",
-    maxFileSize: 5,
-    seoKeywords: ["habit tracker", "track habits", "habit log"]
-  },
-  {
     id: "calendar-generator",
     name: "Calendar Generator",
     description: "Generate printable calendars",
@@ -1042,20 +1026,6 @@ export const toolsConfig: ToolConfig[] = [
     status: "active",
     maxFileSize: 5,
     seoKeywords: ["calendar generator", "printable calendar", "create calendar"]
-  },
-  {
-    id: "todo-list",
-    name: "Todo List Generator",
-    description: "Create printable todo lists",
-    category: "productivity",
-    icon: "📝",
-    inputTypes: [".txt", ".json"],
-    outputType: ".pdf",
-    action: "generate-todo",
-    phase: 3,
-    status: "active",
-    maxFileSize: 5,
-    seoKeywords: ["todo list", "task list", "checklist generator"]
   },
   {
     id: "qr-generator",
@@ -1144,21 +1114,7 @@ export const toolsConfig: ToolConfig[] = [
     seoKeywords: ["add watermark", "watermark image", "watermark pdf"]
   },
 
-  // Phase 4: Viral/Niche Tools (10 tools)
-  {
-    id: "meme-generator",
-    name: "Meme Generator",
-    description: "Create memes with text",
-    category: "viral",
-    icon: "😂",
-    inputTypes: [".jpg", ".jpeg", ".png"],
-    outputType: ".png",
-    action: "generate-meme",
-    phase: 4,
-    status: "active",
-    maxFileSize: 10,
-    seoKeywords: ["meme generator", "create meme", "meme maker"]
-  },
+  // Phase 4: Viral/Niche Tools (Useful conversion tools only)
   {
     id: "collage-maker",
     name: "Image Collage Maker",
@@ -1172,34 +1128,6 @@ export const toolsConfig: ToolConfig[] = [
     status: "active",
     maxFileSize: 50,
     seoKeywords: ["collage maker", "photo collage", "combine images"]
-  },
-  {
-    id: "gif-maker",
-    name: "GIF Maker",
-    description: "Create GIFs from images/video",
-    category: "viral",
-    icon: "🎞️",
-    inputTypes: [".jpg", ".jpeg", ".png", ".mp4", ".mov"],
-    outputType: ".gif",
-    action: "make-gif",
-    phase: 4,
-    status: "active",
-    maxFileSize: 100,
-    seoKeywords: ["gif maker", "create gif", "animated gif"]
-  },
-  {
-    id: "background-remover",
-    name: "Background Remover",
-    description: "Remove image backgrounds",
-    category: "viral",
-    icon: "🎭",
-    inputTypes: [".jpg", ".jpeg", ".png"],
-    outputType: ".png",
-    action: "remove-background",
-    phase: 4,
-    status: "active",
-    maxFileSize: 10,
-    seoKeywords: ["background remover", "remove bg", "transparent background"]
   },
   {
     id: "image-to-pdf",
@@ -1242,62 +1170,19 @@ export const toolsConfig: ToolConfig[] = [
     status: "active",
     maxFileSize: 50,
     seoKeywords: ["epub to pdf", "convert ebook", "ebook converter"]
-  },
-  {
-    id: "voice-changer",
-    name: "Audio Voice Changer",
-    description: "Modify audio pitch/speed",
-    category: "viral",
-    icon: "🎤",
-    inputTypes: [".mp3", ".wav", ".m4a"],
-    outputType: ".mp3",
-    action: "change-voice",
-    phase: 4,
-    status: "active",
-    maxFileSize: 50,
-    seoKeywords: ["voice changer", "audio effects", "pitch shift"]
-  },
-  {
-    id: "poll-generator",
-    name: "Poll Generator",
-    description: "Create survey/poll PDFs",
-    category: "viral",
-    icon: "📊",
-    inputTypes: [".json"],
-    outputType: ".pdf",
-    action: "generate-poll",
-    phase: 4,
-    status: "active",
-    maxFileSize: 5,
-    seoKeywords: ["poll generator", "survey maker", "create poll"]
-  },
-  {
-    id: "signature-generator",
-    name: "Signature Generator",
-    description: "Create digital signatures",
-    category: "viral",
-    icon: "✍️",
-    inputTypes: [".txt"],
-    outputType: ".png",
-    action: "generate-signature",
-    phase: 4,
-    status: "active",
-    maxFileSize: 1,
-    seoKeywords: ["signature generator", "digital signature", "create signature"]
   }
 ];
 
 export const categories = [
+  { id: "social", name: "Social Media Downloaders", icon: "📱", description: "Download videos and media from social platforms" },
+  { id: "video", name: "Video Tools", icon: "🎥", description: "Process and convert videos" },
   { id: "pdf", name: "PDF Tools", icon: "📄", description: "Manage and manipulate PDF documents" },
   { id: "image", name: "Image Tools", icon: "🖼️", description: "Edit and convert images" },
-  { id: "video", name: "Video Tools", icon: "🎥", description: "Process and convert videos" },
   { id: "audio", name: "Audio Tools", icon: "🔊", description: "Work with audio files" },
   { id: "document", name: "Document Tools", icon: "📝", description: "Work with Word documents" },
-  { id: "social", name: "Social Media Tools", icon: "📱", description: "Download from social media platforms" },
   { id: "generator", name: "Document Generators", icon: "✨", description: "Generate professional documents" },
   { id: "productivity", name: "Productivity Tools", icon: "⚡", description: "Boost your productivity" },
   { id: "file-utility", name: "File Utilities", icon: "🔧", description: "Various file utilities" },
-  { id: "viral", name: "Viral/Niche Tools", icon: "🔥", description: "Trending and creative tools" },
   { id: "qrcode", name: "QR Code Tools", icon: "📱", description: "Generate and decode QR codes" },
   { id: "utility", name: "Utility Tools", icon: "🔧", description: "Various file utilities" }
 ];

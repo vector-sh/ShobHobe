@@ -17,7 +17,7 @@ export default function Home() {
             Your Universal File Processing Toolkit
           </p>
           <p className="text-lg text-indigo-200 max-w-3xl mx-auto">
-            107+ powerful tools for PDF, images, videos, documents, QR codes, and more.
+            100+ powerful tools for PDF, images, videos, documents, QR codes, and more.
             All processing happens securely. Fast, simple, and 100% free!
           </p>
           <p className="text-sm text-indigo-300 mt-4">
