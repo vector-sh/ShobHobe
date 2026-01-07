@@ -566,9 +566,11 @@ export const toolsConfig: ToolConfig[] = [
     description: "Create QR codes from text or URLs",
     category: "qrcode",
     icon: "📱",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".png",
-    action: "generate"
+    action: "generate",
+    acceptsUrl: false,
+    urlPlaceholder: "Enter text or URL to generate QR code"
   },
   {
     id: "qr-decode",
@@ -596,9 +598,11 @@ export const toolsConfig: ToolConfig[] = [
     description: "Create QR codes with custom colors and logos",
     category: "qrcode",
     icon: "🎨",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".png",
-    action: "custom"
+    action: "custom",
+    acceptsUrl: false,
+    urlPlaceholder: "Enter text or URL for custom QR code"
   },
   {
     id: "qr-vcard",
@@ -946,16 +950,18 @@ export const toolsConfig: ToolConfig[] = [
   {
     id: "barcode-generator",
     name: "Barcode Generator",
-    description: "Generate various barcodes",
+    description: "Generate various barcodes from text",
     category: "productivity",
     icon: "📊",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".png",
     action: "generate-barcode",
     phase: 3,
     status: "active",
     maxFileSize: 1,
-    seoKeywords: ["barcode generator", "create barcode", "generate barcode"]
+    seoKeywords: ["barcode generator", "create barcode", "generate barcode"],
+    acceptsUrl: false,
+    urlPlaceholder: "Enter text or numbers to generate barcode"
   },
   {
     id: "url-shortener",
@@ -963,13 +969,15 @@ export const toolsConfig: ToolConfig[] = [
     description: "Shorten long URLs",
     category: "productivity",
     icon: "🔗",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".txt",
     action: "shorten-url",
     phase: 3,
     status: "active",
     maxFileSize: 1,
-    seoKeywords: ["url shortener", "shorten url", "short link"]
+    seoKeywords: ["url shortener", "shorten url", "short link"],
+    acceptsUrl: true,
+    urlPlaceholder: "https://example.com/very-long-url-to-shorten"
   },
   {
     id: "password-generator",
@@ -991,13 +999,15 @@ export const toolsConfig: ToolConfig[] = [
     description: "Validate password strength",
     category: "productivity",
     icon: "🔒",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".json",
     action: "check-password",
     phase: 3,
     status: "active",
     maxFileSize: 1,
-    seoKeywords: ["password checker", "password strength", "validate password"]
+    seoKeywords: ["password checker", "password strength", "validate password"],
+    acceptsUrl: false,
+    urlPlaceholder: "Enter password to check strength"
   },
   {
     id: "color-palette",
@@ -1033,13 +1043,15 @@ export const toolsConfig: ToolConfig[] = [
     description: "Generate QR codes from text/URLs",
     category: "productivity",
     icon: "📱",
-    inputTypes: [".txt"],
+    inputTypes: [],
     outputType: ".png",
     action: "generate-qr",
     phase: 3,
     status: "active",
     maxFileSize: 1,
-    seoKeywords: ["qr code generator", "generate qr", "create qr code"]
+    seoKeywords: ["qr code generator", "generate qr", "create qr code"],
+    acceptsUrl: false,
+    urlPlaceholder: "Enter text or URL to generate QR code"
   },
 
   // Phase 3: File Utilities (5 tools)
