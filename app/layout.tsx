@@ -17,7 +17,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "ShobHobe - Universal File Processing Toolkit",
-  description: "107+ powerful tools for PDF, images, videos, documents, QR codes, and more. Process files quickly and securely. All tools 100% free!",
+  description: "115+ powerful tools for PDF, images, videos, documents, QR codes, research, and more. Process files quickly and securely. All tools 100% free!",
 };
 
 export default function RootLayout({
