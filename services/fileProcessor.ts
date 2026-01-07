@@ -1602,7 +1602,7 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
           const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
           citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}, ${data.year || 'n.d.'}, ${data.url || 'www.example.com'}. Accessed ${accessDate}.`;
         }
-      } else {
+      } else if (citationType === 'Chicago') {
         // Chicago Format
         if (sourceType === 'book') {
           citation = `${data.author || 'Author, First Last'}. ${data.title || 'Title of Work'}. ${data.location || 'City'}: ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
@@ -1613,6 +1613,43 @@ async function processResearch(action: string, files: File[]): Promise<ProcessRe
           const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
           citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}. Accessed ${accessDate}. ${data.url || 'https://example.com'}.`;
         }
+      } else if (citationType === 'IEEE') {
+        // IEEE Format
+        if (sourceType === 'book') {
+          citation = `${data.author || 'A. Author'}, ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.year || 'Year'}.`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'A. Author'}, "${data.title || 'Title of article'}," ${data.journal || 'Journal Name'}, vol. ${data.volume || 'XX'}, no. ${data.issue || 'X'}, pp. ${data.pages || 'XX-XX'}, ${data.year || 'Year'}.`;
+        } else {
+          // Website or default
+          const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          citation = `${data.author || 'A. Author'}, "${data.title || 'Title of webpage'}," ${data.website || 'Website Name'}. ${data.url || 'https://example.com'} (accessed ${accessDate}).`;
+        }
+      } else if (citationType === 'Springer') {
+        // Springer Format (similar to APA with variations)
+        if (sourceType === 'book') {
+          citation = `${data.author || 'Author A'}. (${data.year || 'Year'}) ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.location || 'City'}`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'Author A'}. (${data.year || 'Year'}). ${data.title || 'Title of article'}. ${data.journal || 'Journal Name'} ${data.volume || 'XX'}, ${data.pages || 'XX–XX'}`;
+        } else {
+          // Website or default
+          const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          citation = `${data.author || 'Author A'}. ${data.title || 'Title of webpage'}. ${data.website || 'Website Name'}. ${data.url || 'https://example.com'}. Accessed ${accessDate}`;
+        }
+      } else if (citationType === 'ACM') {
+        // ACM Format
+        if (sourceType === 'book') {
+          citation = `${data.author || 'FirstName LastName'}. ${data.year || 'Year'}. ${data.title || 'Title of Work'}. ${data.publisher || 'Publisher'}, ${data.location || 'City'}.`;
+        } else if (sourceType === 'journal') {
+          citation = `${data.author || 'FirstName LastName'}. ${data.year || 'Year'}. ${data.title || 'Title of Article'}. ${data.journal || 'Journal Name'}. ${data.volume || 'XX'}, ${data.issue || 'X'} (${data.year || 'Year'}), ${data.pages || 'XX-XX'}.`;
+        } else {
+          // Website or default
+          const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          citation = `${data.author || 'FirstName LastName'}. ${data.year || 'Year'}. ${data.title || 'Title of webpage'}. Retrieved ${accessDate} from ${data.url || 'https://example.com'}`;
+        }
+      } else {
+        // Default to Chicago if unknown format
+        const accessDate = data.accessDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        citation = `${data.author || 'Author, First Last'}. "${data.title || 'Title of Webpage'}." ${data.website || 'Website Name'}. Accessed ${accessDate}. ${data.url || 'https://example.com'}.`;
       }
       
       // Return both JSON (with citation text) and PDF

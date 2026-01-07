@@ -144,7 +144,7 @@ export default function CitationToolTemplate({ tool }: CitationToolTemplateProps
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">📖 Citation Style</h3>
                 <div className="grid grid-cols-3 gap-3">
-                  {['APA', 'MLA', 'Chicago'].map((style) => (
+                  {['APA', 'MLA', 'Chicago', 'IEEE', 'Springer', 'ACM'].map((style) => (
                     <button
                       key={style}
                       onClick={() => setCitationStyle(style)}

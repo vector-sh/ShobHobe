@@ -1244,6 +1244,21 @@ export const toolsConfig: ToolConfig[] = [
     status: "active",
     maxFileSize: 20,
     seoKeywords: ["text analyzer", "word count", "readability score", "academic analysis", "writing analysis"]
+  },
+  {
+    id: "latex-visualizer",
+    name: "LaTeX Math Visualizer",
+    description: "Render LaTeX equations and generate LaTeX code",
+    category: "research",
+    icon: "∑",
+    inputTypes: [],
+    outputType: ".png",
+    action: "visualize-latex",
+    phase: 4,
+    status: "active",
+    maxFileSize: 1,
+    seoKeywords: ["latex visualizer", "math equation", "latex code", "equation renderer", "math formula"],
+    acceptsUrl: false
   }
 ];
 
